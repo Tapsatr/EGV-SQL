@@ -1,0 +1,8 @@
+# Eval-CLIENT environment only (inference.py + the bge reranker + HTTP client).
+# vLLM is intentionally NOT listed here: it pins its own torch/xformers and must
+# be new enough to support the Qwen3.6 (Qwen3_5ForConditionalGeneration) arch, so
+# it is installed in a SEPARATE venv. See README "vLLM serving environment".
+requests>=2.31.0
+torch>=2.0.0
+transformers>=4.40.0
+sentence-transformers>=2.7.0
