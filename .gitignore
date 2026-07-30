@@ -47,3 +47,6 @@ out/
 tmp/
 *.tar.gz
 *.zip
+
+# Internal cluster/runbook manifests
+deploy/
