@@ -57,13 +57,10 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 # vLLM pins its own torch/xformers, so it is kept apart from the client stack.
 # It MUST be new enough for the Qwen3.6 arch (Qwen3_5ForConditionalGeneration):
 # support merged upstream in PR #34110 and ships in vLLM >= 0.17.0.
-# ACTION: pin the EXACT vLLM version you validated on dev, and prefer a cu12.x
-# wheel that runs on the 12.3 eval driver. If vLLM's default wheel targets a newer
-# CUDA, either install the cu121/cu123 variant or confirm the eval box tolerates
-# 12.x minor-version compat (it usually does, but you can't test that on the H200).
+# Pin to the exact vLLM we validated on BIRD-dev (Qwen3.6 / GDN on CUDA 12.3).
 RUN python3 -m venv /app/venv-vllm && \
     /app/venv-vllm/bin/pip install --no-cache-dir -U pip && \
-    /app/venv-vllm/bin/pip install --no-cache-dir "vllm>=0.17.0"
+    /app/venv-vllm/bin/pip install --no-cache-dir "vllm==0.26.0"
 
 COPY . .
 
@@ -83,6 +80,5 @@ ENV VLLM_BIN=/app/venv-vllm/bin/vllm
 #     -v /host/test_databases:/data/test_databases \
 #     -v /host/test.json:/data/test.json \
 #     -e DB_DIR=/data/test_databases -e TEST_JSON=/data/test.json \
-#     -e COLUMN_MEANING_JSON=/data/column_meaning.json \
 #     <image>
 CMD ["bash", "run_pipeline.sh"]

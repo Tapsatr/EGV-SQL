@@ -25,7 +25,8 @@ FALLBACK_SQL = "SELECT 1"
 # You can override these via CLI arguments in inference.py
 NUM_VOTES = 10
 TEMPERATURE = 0.6
-PARALLEL_QUESTIONS = 10
+# Category 1 (~80G): keep ≤5 so GDN KV isn't oversubscribed (raise on larger GPUs).
+PARALLEL_QUESTIONS = 5
 MAX_OUTPUT_TOKENS = 6000
 API_MAX_RETRIES = 2
 API_REQUEST_TIMEOUT = 600.0

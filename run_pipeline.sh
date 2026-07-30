@@ -17,7 +17,7 @@ set -e
 # Paths to BIRD Test Set Data (override via env, e.g. `docker run -e DB_DIR=...`)
 DB_DIR="${DB_DIR:-/path/to/test_databases}"
 TEST_JSON="${TEST_JSON:-/path/to/test.json}"
-COLUMN_MEANING_JSON="${COLUMN_MEANING_JSON:-/path/to/column_meaning.json}"  # optional; omit flag below if unused
+COLUMN_MEANING_JSON="${COLUMN_MEANING_JSON:-}"  # unused for official BIRD eval; leave empty
 
 # Model Weights (public HF Hub repos, or local paths). These repos are public,
 # so no HF token is required. (If you later make them private, `export HF_TOKEN=...`.)
@@ -29,7 +29,13 @@ RERANKER_MODEL="${RERANKER_MODEL:-treprepr/reranker-bird-evidence-finetuned}"   
 # defaults to whatever `vllm` is on PATH. The client (inference.py) runs in the
 # env built from requirements.txt.
 VLLM_BIN="${VLLM_BIN:-vllm}"
-GPU_MEM_UTIL="${GPU_MEM_UTIL:-0.85}"   # leave headroom for the reranker in the client process
+GPU_MEM_UTIL="${GPU_MEM_UTIL:-0.88}"   # leave headroom for the reranker in the client process
+# Qwen3.6 GDN: default max_num_seqs=256 exceeds Mamba cache blocks on ~80G; 64 fits.
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-64}"
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-40960}"
+# Optional overrides (defaults: config.py).
+PARALLEL_QUESTIONS="${PARALLEL_QUESTIONS:-}"
+NUM_VOTES="${NUM_VOTES:-}"
 
 # Max time (seconds) to wait for vLLM to answer /v1/models before giving up.
 VLLM_READY_TIMEOUT="${VLLM_READY_TIMEOUT:-1800}"
@@ -135,16 +141,16 @@ fi
 
 # NOTE: Depending on the model size, you may need to adjust tensor-parallel-size.
 # --trust-remote-code + --language-model-only are REQUIRED for this Qwen3.6
-# (Qwen3_5ForConditionalGeneration) multimodal checkpoint: the second flag skips
-# the vision tower so the KV cache fits on one 80G A100 alongside the reranker.
-# Tee startup/crash lines to ${PREDICT_JSON%.json}.vllm.log as well as the console.
+# multimodal checkpoint (skip vision tower so KV fits on one 80G A100 + reranker).
+# Tee startup/crash lines to *.vllm.log as well.
 "$VLLM_BIN" serve "$LLM_MODEL_PATH" \
     --served-model-name "$LLM_MODEL_NAME" \
     --trust-remote-code \
     --language-model-only \
     --dtype bfloat16 \
     --tensor-parallel-size 1 \
-    --max-model-len 40960 \
+    --max-model-len "$MAX_MODEL_LEN" \
+    --max-num-seqs "$MAX_NUM_SEQS" \
     --gpu-memory-utilization "$GPU_MEM_UTIL" \
     --port 8000 \
     > >(tee -a "$VLLM_LOG") 2>&1 &
@@ -190,14 +196,22 @@ echo "vLLM server is up and serving '$LLM_MODEL_NAME'!"
 echo "=========================================="
 echo "4. Running NL-to-SQL Inference"
 echo "=========================================="
-python inference.py \
-    --input "$TEST_JSON" \
-    --db-dir "$DB_DIR" \
-    --chunks "$CHUNKS_JSON" \
-    --output "$PREDICT_JSON" \
-    --log-file "$PREDICT_LOG" \
-    --llm-model "$LLM_MODEL_NAME" \
+INFER_ARGS=(
+    --input "$TEST_JSON"
+    --db-dir "$DB_DIR"
+    --chunks "$CHUNKS_JSON"
+    --output "$PREDICT_JSON"
+    --log-file "$PREDICT_LOG"
+    --llm-model "$LLM_MODEL_NAME"
     --reranker-model "$RERANKER_MODEL"
+)
+if [[ -n "$PARALLEL_QUESTIONS" ]]; then
+    INFER_ARGS+=(--parallel-questions "$PARALLEL_QUESTIONS")
+fi
+if [[ -n "$NUM_VOTES" ]]; then
+    INFER_ARGS+=(--num-votes "$NUM_VOTES")
+fi
+python inference.py "${INFER_ARGS[@]}"
 
 echo "=========================================="
 echo "5. Validating predict.json"
