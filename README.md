@@ -1,20 +1,19 @@
-# EGV-SQL — BIRD Submission (Category 1)
+# EGV-SQL: Execution-Guided Voting for Text-to-SQL
 
-**E**xecution-**G**uided **V**oting for NL-to-SQL: rerank the whole DB schema per
-question, sample candidates, then keep the answer whose *executed result* the
-candidates agree on.
+Rerank the whole DB schema per question, sample candidates, then keep the answer
+whose *executed result* the candidates agree on.
 
 Official BIRD **test** set: EX **72.16%**, Soft-F1 **73.04%**, R-VES **65.90%**.
 
 | | |
 |---|---|
-| **Category** | 1 — single **A100 80G** |
+| **Hardware** | single **A100 80G** (BIRD eval category 1) |
 | **CUDA** | 12.2 / 12.3 (`Dockerfile` uses `nvidia/cuda:12.3.2-…-devel`) |
 | **Models (public HF)** | `treprepr/qwen3.6-27b-bird-evidence-finetuned`, `treprepr/reranker-bird-evidence-finetuned` |
 | **`column_meaning.json`** | **Not used** (schema from BIRD `database_description/*.csv` only) |
-| **Dev runtime** | ~6 h on H200 MIG ~143 GB; ~1 day on A100 80G (Category 1) |
+| **Dev runtime** | ~6 h on H200 MIG ~143 GB; ~1 day on A100 80G |
 
-## Quick start (Exp Team)
+## Quick start
 
 Mount `test.json` and `test_databases/`. Output is `predict.json`. Resume-safe:
 re-run the same command to continue after failures.
