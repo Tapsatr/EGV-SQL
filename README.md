@@ -18,6 +18,10 @@ Official BIRD **test** set: EX **72.16%**, Soft-F1 **73.04%**, R-VES **65.90%**.
 Mount `test.json` and `test_databases/`. Output is `predict.json`. Resume-safe:
 re-run the same command to continue after failures.
 
+The hidden BIRD test set is not public. To reproduce, point `TEST_JSON` and
+`DB_DIR` at any BIRD-format split; `dev.json` + `dev_databases/` gives the
+71.64% EX in [Results](#results).
+
 ```bash
 # 1) Build (once; needs network for pip + base image)
 docker build -t egv-sql .
@@ -111,4 +115,4 @@ Needs `nvcc` on `PATH` (CUDA **devel** toolkit). Prefer the Docker path above.
 ## Notes
 
 - `test_tables.json` is not required by our scripts (DBs + `test.json` suffice).
-- Contact: [BIRD submission guidelines](https://bird-bench.github.io/).
+- Benchmark: [BIRD-SQL](https://bird-bench.github.io/).
