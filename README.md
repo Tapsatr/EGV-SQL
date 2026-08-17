@@ -1,7 +1,10 @@
-# BIRD Submission — Qwen RAG (Category 1)
+# EGV-SQL — BIRD Submission (Category 1)
 
-NL-to-SQL inference for the hidden BIRD **test** set. Validated on BIRD **dev**
-(local EX **71.64%**, 1099/1534; see `dev_predict.json`).
+**E**xecution-**G**uided **V**oting for NL-to-SQL: rerank the whole DB schema per
+question, sample candidates, then keep the answer whose *executed result* the
+candidates agree on.
+
+Official BIRD **test** set: EX **72.16%**, Soft-F1 **73.04%**, R-VES **65.90%**.
 
 | | |
 |---|---|
@@ -18,7 +21,7 @@ re-run the same command to continue after failures.
 
 ```bash
 # 1) Build (once; needs network for pip + base image)
-docker build -t bird-qwen-rag .
+docker build -t egv-sql .
 
 # 2) Run (set the host paths on the left of -v to your test set)
 docker run --gpus all \
@@ -29,7 +32,7 @@ docker run --gpus all \
   -e TEST_JSON=/data/test.json \
   -e PREDICT_JSON=/data/out/predict.json \
   -e CHUNKS_JSON=/data/out/schema_chunks_test.json \
-  bird-qwen-rag
+  egv-sql
 ```
 
 That single `docker run` starts vLLM, builds schema chunks, runs inference,
@@ -73,7 +76,15 @@ Optional HF cache (avoids re-downloading ~52 GB weights):
 (so they retry). If anything is still missing after retries, a final pass with
 `inference.py --fill-missing` writes `SELECT 1` for gaps (scores 0 EX).
 
-## Dev predictions
+## Results
+
+Official test set (1789 questions), as reported by the BIRD team:
+
+| | simple (949) | moderate (555) | challenging (285) | total |
+|---|---|---|---|---|
+| **EX** | 79.77 | 69.01 | 52.98 | **72.16** |
+| **Soft-F1** | 79.91 | 70.41 | 55.25 | **73.04** |
+| **R-VES** | 72.81 | 63.48 | 47.57 | **65.90** |
 
 `dev_predict.json` is included for reproduction. Local EX **71.64%** on the
 original BIRD-dev split (not `bird-sql-dev-1106`): simple 76.65%, moderate
